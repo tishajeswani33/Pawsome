@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pawsome - Dog Breed Scanner</title>
+  <style>
+    :root {
+      --primary-color: #4a90e2;
+      --background-color: #f8f9fa;
+      --card-color: #ffffff;
+      --text-color: #2c3e50;
+      --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--background-color);
+      color: var(--text-color);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    .header {
+      background: var(--card-color);
+      padding: 20px;
+      text-align: center;
+      box-shadow: var(--shadow);
+      position: relative;
+    }
+
+    .back-button {
+      position: absolute;
+      left: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: var(--primary-color);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .logo {
+      font-size: 24px;
+      font-weight: bold;
+      color: var(--primary-color);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      text-decoration: none;
+    }
+
+    .upload-container {
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 30px;
+      background: var(--card-color);
+      border-radius: 15px;
+      box-shadow: var(--shadow);
+    }
+
+    .upload-title {
+      text-align: center;
+      margin-bottom: 25px;
+      color: var(--text-color);
+    }
+
+    .upload-area {
+      border: 2px dashed #ccc;
+      border-radius: 10px;
+      padding: 40px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+
+    .upload-area.minimized {
+      padding: 15px;
+      border-style: solid;
+      background-color: var(--primary-color);
+      color: white;
+      transform: scale(0.98);
+    }
+
+    .upload-area.minimized:hover {
+      transform: scale(1);
+      background-color: #357abd;
+    }
+
+    .upload-area.minimized .upload-icon,
+    .upload-area.minimized .upload-text:last-child {
+      display: none;
+    }
+
+    .upload-area.minimized .upload-text:first-child {
+      margin: 0;
+      color: white;
+    }
+
+    .upload-area:hover {
+      border-color: var(--primary-color);
+      background-color: rgba(74, 144, 226, 0.05);
+    }
+
+    .upload-area.dragover {
+      border-color: var(--primary-color);
+      background-color: rgba(74, 144, 226, 0.1);
+    }
+
+    .upload-icon {
+      font-size: 48px;
+      margin-bottom: 15px;
+    }
+
+    .upload-text {
+      margin-bottom: 10px;
+      color: #666;
+    }
+
+    .file-input {
+      display: none;
+    }
+
+    .preview-section {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 20px 0;
+      min-height: 300px;
+      background-color: rgba(0, 0, 0, 0.02);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .preview-container {
+      position: relative;
+      display: none;
+      max-width: 100%;
+      max-height: 400px;
+      margin: 0 auto;
+    }
+
+    .preview-image {
+      display: block;
+      max-width: 100%;
+      max-height: 400px;
+      object-fit: contain;
+      border-radius: 10px;
+    }
+
+    .loading-spinner {
+      display: none;
+      margin: 20px auto;
+      width: 40px;
+      height: 40px;
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid var(--primary-color);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    .result-container {
+      margin-top: 20px;
+      padding: 25px;
+      border-radius: 10px;
+      background-color: #f8f9fa;
+      display: none;
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    .breed-name {
+      font-size: 24px;
+      color: var(--primary-color);
+      margin-bottom: 15px;
+      font-weight: 600;
+    }
+
+    .breed-info {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      margin-top: 15px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .info-section {
+      margin-bottom: 15px;
+    }
+
+    .info-section:last-child {
+      margin-bottom: 0;
+    }
+
+    .info-title {
+      font-weight: 600;
+      margin-bottom: 5px;
+      color: var(--text-color);
+    }
+
+    .confidence-bar {
+      height: 6px;
+      background-color: #e9ecef;
+      border-radius: 3px;
+      margin-top: 8px;
+      overflow: hidden;
+    }
+
+    .confidence-level {
+      height: 100%;
+      background-color: var(--primary-color);
+      border-radius: 3px;
+      transition: width 0.3s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .error-message {
+      color: #dc3545;
+      text-align: center;
+      margin-top: 10px;
+      display: none;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 480px) {
+      .upload-container {
+        margin: 20px;
+        padding: 20px;
+      }
+
+      .upload-area {
+        padding: 20px;
+      }
+
+       
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <button class="back-button" onclick="window.history.back()">
+      ←
+    </button>
+    <a href="index.html" class="logo">
+      <span class="paw-icon">🐾</span>
+      <span>Pawsome</span>
+    </a>
+  </header>
+
+  <div class="upload-container">
+    <h2 class="upload-title">Scan Your Dog</h2>
+    <div class="upload-area" id="uploadArea">
+      <div class="upload-icon">📸</div>
+      <p class="upload-text">Drag and drop your dog's photo here</p>
+      <p class="upload-text">or click to select a file</p>
+      <input type="file" id="fileInput" class="file-input" accept="image/*">
+    </div>
+
+    <div class="preview-section">
+      <div class="preview-container" id="previewContainer">
+        <img class="preview-image" id="previewImage" alt="Preview">
+      </div>
+    </div>
+
+    <div class="loading-spinner" id="loadingSpinner"></div>
+    
+    <div class="result-container" id="resultContainer"></div>
+    
+    <div class="error-message" id="errorMessage"></div>
+  </div>
+
+  <script>
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('fileInput');
+    const previewContainer = document.getElementById('previewContainer');
+    const previewImage = document.getElementById('previewImage');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    const resultContainer = document.getElementById('resultContainer');
+    const errorMessage = document.getElementById('errorMessage');
+
+    // Handle drag and drop events
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+      uploadArea.addEventListener(eventName, preventDefaults, false);
+      document.body.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+      uploadArea.addEventListener(eventName, highlight, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      uploadArea.addEventListener(eventName, unhighlight, false);
+    });
+
+    function highlight() {
+      uploadArea.classList.add('dragover');
+    }
+
+    function unhighlight() {
+      uploadArea.classList.remove('dragover');
+    }
+
+    // Handle file selection
+    uploadArea.addEventListener('click', () => {
+      if (uploadArea.classList.contains('minimized')) {
+        uploadArea.classList.remove('minimized');
+        uploadArea.innerHTML = `
+          <div class="upload-icon">📸</div>
+          <p class="upload-text">Drag and drop your dog's photo here</p>
+          <p class="upload-text">or click to select a file</p>
+          <input type="file" id="fileInput" class="file-input" accept="image/*">
+        `;
+        fileInput = uploadArea.querySelector('.file-input');
+        fileInput.addEventListener('change', handleFiles, false);
+      } else {
+        fileInput.click();
+      }
+    });
+
+    uploadArea.addEventListener('drop', handleDrop, false);
+    fileInput.addEventListener('change', handleFiles, false);
+
+    function handleDrop(e) {
+      const dt = e.dataTransfer;
+      const files = dt.files;
+      handleFiles({ target: { files } });
+    }
+
+    function handleFiles(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      if (!file.type.startsWith('image/')) {
+        showError('Please upload an image file');
+        return;
+      }
+
+      // Preview the image
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        previewImage.src = e.target.result;
+        previewContainer.style.display = 'block';
+        
+        // Minimize upload area
+        uploadArea.classList.add('minimized');
+        uploadArea.innerHTML = `
+          <span class="scan-icon">📸</span>
+          <span class="upload-text">Scan Another</span>
+        `;
+      };
+      reader.readAsDataURL(file);
+
+
+      // Upload the file
+      uploadFile(file);
+    }
+
+ 
+
+    // Add the Gemini API script
+    const script = document.createElement('script');
+    script.src = "https://ai.google.com/js/api.js";
+    document.head.appendChild(script);
+
+    // ... (previous script content remains the same until uploadFile function) ...
+
+    async function uploadFile(file) {
+      const API_KEY = 'AIzaSyAbV_EbjvBf8bNPm5AkFCj4xGUENRiUigk'; // Replace with your actual API key
+    const API_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+      
+  
+  loadingSpinner.style.display = 'block';
+  resultContainer.style.display = 'none';
+  errorMessage.style.display = 'none';
+
+  try {
+    // Convert image to base64
+    const base64Image = await fileToBase64(file);
+    
+    
+
+    // Prepare the request body
+    const requestBody = {
+      contents: [{
+        parts: [
+          {
+            text: "Analyze this dog image and provide the following in minimum words:\n" +
+                  " Breed name\n" +
+                  "Key characteristics\n" +
+                  "Care requirements"
+          },
+          {
+            inline_data: {
+              mime_type: file.type,
+              data: base64Image.split(',')[1]
+            }
+          }
+        ]
+      }]
+    };
+    
+     function fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+      });
+    }
+
+
+    // Make API request
+    const response = await fetch(`${API_ENDPOINT}?key=${API_KEY}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(requestBody)
+    });
+
+    if (!response.ok) {
+      throw new Error('API request failed');
+    }
+
+    const data = await response.json();
+    processAndDisplayResult(data);
+  } catch (error) {
+    console.error('Error:', error);
+    showError('Failed to analyze the image. Please try again.');
+  } finally {
+    loadingSpinner.style.display = 'none';
+  }
+}
+
+function processAndDisplayResult(data) {
+  try {
+    let content = data.candidates[0].content.parts[0].text;
+
+    // Replace ** with <strong> tags for bold formatting
+    content = content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+    // Display the formatted response
+    showResult(content.trim());
+  } catch (error) {
+    console.error('Error processing result:', error);
+    showError('Failed to process the analysis results.');
+  }
+}
+
+function showResult(htmlContent) {
+  resultContainer.style.display = 'block';
+  resultContainer.innerHTML = `
+    <p style="white-space: pre-line; color: var(--text-color);">${htmlContent}</p>
+  `;
+}
+
+    function showError(message) {
+      errorMessage.textContent = message;
+      errorMessage.style.display = 'block';
+    }
+  </script>
+</body>
+</html>
